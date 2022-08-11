@@ -48,3 +48,12 @@ func HmacSHA256(key, data string) []byte {
 	h.Write([]byte(data))
 	return h.Sum(nil)
 }
+
+//hmac sha512
+
+func HmacSHA512(key, data string) []byte {
+	keys := []byte(key)
+	h := hmac.New(sha512.New, keys)
+	h.Write([]byte(data))
+	return h.Sum(nil)
+}

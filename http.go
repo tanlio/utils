@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"errors"
+	"github.com/shopspring/decimal"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -124,6 +125,10 @@ func PostRequest4(uri string, param map[string]interface{}, header map[string]st
 			data.Set(k, strconv.FormatInt(v.(int64), 10))
 		case "string":
 			data.Set(k, v.(string))
+		case "float64":
+			data.Set(k, decimal.NewFromFloat(v.(float64)).String())
+		case "float32":
+			data.Set(k, decimal.NewFromFloat(float64(v.(float32))).String())
 		default:
 			return "", errors.New("Parameter format error")
 		}
