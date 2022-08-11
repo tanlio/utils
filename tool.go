@@ -1,11 +1,9 @@
 package utils
 
 import (
-	"fmt"
 	"github.com/shopspring/decimal"
 	"math"
 	"math/rand"
-	"strconv"
 	"time"
 )
 
@@ -99,12 +97,6 @@ func EarthDistance(lat1, lng1, lat2, lng2 float64) float64 {
 	theta := lng2 - lng1
 	dist := math.Acos(math.Sin(lat1)*math.Sin(lat2) + math.Cos(lat1)*math.Cos(lat2)*math.Cos(theta))
 	return dist * radius
-}
-
-func Decimal(value float64, n int) float64 {
-	str := fmt.Sprintf("%s.%d%s", "%", n, "f")
-	value, _ = strconv.ParseFloat(fmt.Sprintf(str, value), 64)
-	return value
 }
 
 const (

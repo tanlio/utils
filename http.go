@@ -121,6 +121,8 @@ func PostRequest4(uri string, param map[string]interface{}, header map[string]st
 		switch reflect.TypeOf(v).String() {
 		case "int":
 			data.Set(k, strconv.Itoa(v.(int)))
+		case "int32":
+			data.Set(k, strconv.Itoa(int(v.(int32))))
 		case "int64":
 			data.Set(k, strconv.FormatInt(v.(int64), 10))
 		case "string":
