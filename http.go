@@ -21,10 +21,9 @@ func PostRequest(uri string, param map[string]interface{}, header map[string]str
 
 	client := &http.Client{}
 	if len(args) > 0 && reflect.TypeOf(args[0]).String() == "bool" && args[0].(bool) {
-		tr := &http.Transport{
+		client.Transport = &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		}
-		client.Transport = tr
 	}
 
 	request, err := http.NewRequest("POST", uri, strings.NewReader(string(paramJson)))
@@ -55,10 +54,9 @@ func PostRequest2(uri string, param map[string]string, header map[string]string,
 
 	client := &http.Client{}
 	if len(args) > 0 && reflect.TypeOf(args[0]).String() == "bool" && args[0].(bool) {
-		tr := &http.Transport{
+		client.Transport = &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		}
-		client.Transport = tr
 	}
 
 	request, err := http.NewRequest("POST", uri, strings.NewReader(string(paramJson)))
@@ -89,10 +87,9 @@ func PostRequest3(uri string, param map[string]string, header map[string]string,
 
 	client := &http.Client{}
 	if len(args) > 0 && reflect.TypeOf(args[0]).String() == "bool" && args[0].(bool) {
-		tr := &http.Transport{
+		client.Transport = &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		}
-		client.Transport = tr
 	}
 
 	request, err := http.NewRequest("POST", uri, strings.NewReader(data.Encode()))
@@ -138,10 +135,9 @@ func PostRequest4(uri string, param map[string]interface{}, header map[string]st
 
 	client := &http.Client{}
 	if len(args) > 0 && reflect.TypeOf(args[0]).String() == "bool" && args[0].(bool) {
-		tr := &http.Transport{
+		client.Transport = &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		}
-		client.Transport = tr
 	}
 
 	request, err := http.NewRequest("POST", uri, strings.NewReader(data.Encode()))
@@ -176,10 +172,9 @@ func GetRequest(uri string, param map[string]string, header map[string]string, a
 
 	client := &http.Client{}
 	if len(args) > 0 && reflect.TypeOf(args[0]).String() == "bool" && args[0].(bool) {
-		tr := &http.Transport{
+		client.Transport = &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		}
-		client.Transport = tr
 	}
 
 	req, _ := http.NewRequest("GET", uri, nil)

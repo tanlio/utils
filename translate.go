@@ -6,18 +6,23 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"reflect"
 )
 
-func TranslateLanguage(sourceLanguage, targetLanguage, text string) string {
+func TranslateLanguage(sourceLanguage, targetLanguage, text string, args ...interface{}) string {
 	if len(sourceLanguage) == 0 {
 		sourceLanguage = "auto"
 	}
 	if len(targetLanguage) == 0 {
 		targetLanguage = "pt"
 	}
+	version := "baidu"
+	if len(args) > 0 && reflect.TypeOf(args[0]).String() == "string" && (args[0].(string) == "baidu" || args[0].(string) == "google") {
+		version = args[0].(string)
+	}
 
-	uri := "http://translate.sampsong.com/api/exec-translate?content=%s&source_language=%s&target_language=%s"
-	uri = fmt.Sprintf(uri, url.QueryEscape(text), sourceLanguage, targetLanguage)
+	uri := "http://translate.sampsong.com/api/exec-translate?content=%s&source_language=%s&target_language=%s&version=%s"
+	uri = fmt.Sprintf(uri, url.QueryEscape(text), sourceLanguage, targetLanguage, version)
 	client := &http.Client{}
 	req, _ := http.NewRequest("GET", uri, nil)
 	resp, err := client.Do(req)

@@ -4,12 +4,14 @@ import (
 	"github.com/shopspring/decimal"
 	"math"
 	"math/rand"
+	"reflect"
 	"time"
 )
 
 var Rander = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 //三目运算
+
 func IfInt(cond bool, trueInt int, falseInt int) int {
 	if cond {
 		return trueInt
@@ -51,24 +53,28 @@ func IfFloat64(cond bool, trueFloat64 float64, falseFloat64 float64) float64 {
 }
 
 // 加法
+
 func FloatAdd(f1, f2 float64) float64 {
 	ff, _ := decimal.NewFromFloat(f1).Add(decimal.NewFromFloat(f2)).Float64()
 	return ff
 }
 
 // 减法
+
 func FloatSub(f1, f2 float64) float64 {
 	ff, _ := decimal.NewFromFloat(f1).Sub(decimal.NewFromFloat(f2)).Float64()
 	return ff
 }
 
 // 乘法
+
 func FloatMul(f1, f2 float64) float64 {
 	ff, _ := decimal.NewFromFloat(f1).Mul(decimal.NewFromFloat(f2)).Float64()
 	return ff
 }
 
 // 除法
+
 func FloatDiv(f1, f2 float64) float64 {
 	ff, _ := decimal.NewFromFloat(f1).Div(decimal.NewFromFloat(f2)).Float64()
 	return ff
@@ -87,6 +93,7 @@ func Str2Timestamp(str string) int64 {
 }
 
 //计算两点经纬度之间距离
+
 func EarthDistance(lat1, lng1, lat2, lng2 float64) float64 {
 	radius := 6378.137 //km
 	rad := math.Pi / 180.0
@@ -109,7 +116,11 @@ const (
 	NumberAndLowercaseAndCapitalLetter
 )
 
-func RandString(strType, n int) string {
+func RandString(strType int, args ...interface{}) string {
+	n := 0
+	if len(args) > 0 && reflect.TypeOf(args).String() == "int" {
+		n = args[0].(int)
+	}
 	if n == 0 {
 		n = Rander.Intn(10) + 5
 	}
