@@ -3,10 +3,8 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net/http"
-	"net/url"
 	"reflect"
+	"runtime"
 )
 
 func TranslateLanguage(sourceLanguage, targetLanguage, text string, args ...interface{}) string {
@@ -21,18 +19,16 @@ func TranslateLanguage(sourceLanguage, targetLanguage, text string, args ...inte
 		version = args[0].(string)
 	}
 
-	uri := "http://translate.sampsong.com/api/exec-translate?content=%s&source_language=%s&target_language=%s&version=%s"
-	uri = fmt.Sprintf(uri, url.QueryEscape(text), sourceLanguage, targetLanguage, version)
-	client := &http.Client{}
-	req, _ := http.NewRequest("GET", uri, nil)
-	resp, err := client.Do(req)
+	uri := IfString(runtime.GOOS == "linux", "172.22.2.85:8080", "translate.sampsong.com")
+	uri = "http://" + uri + "/api/exec-translate"
+	param := make(map[string]string)
+	param["content"] = text
+	param["source_language"] = sourceLanguage
+	param["target_language"] = targetLanguage
+	param["version"] = version
+	response, err := GetRequest(uri, param, nil)
 	if err != nil {
-		return text
-	}
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println("-----------TranslateLanguage", string(body))
+		fmt.Println("-----------TranslateLanguage", err)
 		return text
 	}
 	type Response struct {
@@ -43,12 +39,12 @@ func TranslateLanguage(sourceLanguage, targetLanguage, text string, args ...inte
 		} `json:"data"`
 	}
 
-	var response Response
-	json.Unmarshal(body, &response)
-	if response.Code != 200 {
-		fmt.Println("-----------TranslateLanguage", string(body))
+	var res Response
+	json.Unmarshal([]byte(response), &res)
+	if res.Code != 200 {
+		fmt.Println("-----------TranslateLanguage", response)
 		return text
 	}
 
-	return response.Data.Content
+	return res.Data.Content
 }
