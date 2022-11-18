@@ -118,7 +118,7 @@ const (
 
 func RandString(strType int, args ...interface{}) string {
 	n := 0
-	if len(args) > 0 && reflect.TypeOf(args).String() == "int" {
+	if len(args) > 0 && reflect.TypeOf(args[0]).String() == "int" {
 		n = args[0].(int)
 	}
 	if n == 0 {
