@@ -128,6 +128,8 @@ func PostRequest4(uri string, param map[string]interface{}, header map[string]st
 			data.Set(k, decimal.NewFromFloat(v.(float64)).String())
 		case "float32":
 			data.Set(k, decimal.NewFromFloat(float64(v.(float32))).String())
+		case "bool":
+			data.Set(k, IfString(v.(bool), "true", "false"))
 		default:
 			return "", errors.New("Parameter format error")
 		}
