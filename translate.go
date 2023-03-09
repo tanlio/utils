@@ -19,7 +19,7 @@ func TranslateLanguage(sourceLanguage, targetLanguage, text string, args ...inte
 		version = args[0].(string)
 	}
 
-	uri := IfString(runtime.GOOS == "linux", "sampsong-translate:8080", "translate.sampsong.com")
+	uri := IfString(runtime.GOOS == "linux", "translate:8080", "translate.sampsong.com")
 	uri = "http://" + uri + "/api/exec-translate"
 	param := make(map[string]string)
 	param["content"] = text
