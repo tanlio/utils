@@ -106,8 +106,10 @@ func EarthDistance(lat1, lng1, lat2, lng2 float64) float64 {
 	return dist * radius
 }
 
+type RandType int
+
 const (
-	Lowercase int = iota + 1
+	Lowercase RandType = iota + 1
 	CapitalLetter
 	LowercaseAndCapitalLetter
 	Number
@@ -116,13 +118,10 @@ const (
 	NumberAndLowercaseAndCapitalLetter
 )
 
-func RandString(strType int, args ...interface{}) string {
-	n := 0
+func RandString(strType RandType, args ...interface{}) string {
+	n := Rander.Intn(10) + 5
 	if len(args) > 0 && reflect.TypeOf(args[0]).String() == "int" {
 		n = args[0].(int)
-	}
-	if n == 0 {
-		n = Rander.Intn(10) + 5
 	}
 	var sourceStr, targetStr string
 	switch strType {
