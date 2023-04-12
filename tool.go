@@ -148,3 +148,37 @@ func RandString(strType RandType, args ...interface{}) string {
 
 	return targetStr
 }
+
+func GenerateRedPacket(totalAmount int64, num int64, maxAmount int64, minAmount int64, rng *rand.Rand) []int64 {
+	result := make([]int64, num)
+	var averageAmount = totalAmount / num
+	if maxAmount < averageAmount || minAmount > averageAmount {
+		return result
+	}
+
+	if rng == nil {
+		rng = Rander
+	}
+
+	remainAmount := totalAmount - minAmount*num
+	for i := 0; i < int(num); i++ {
+		var amount int64
+		if i == int(num-1) {
+			amount = remainAmount
+		} else {
+			if remainAmount != 0 {
+				tempRandAmount := IfInt64(remainAmount > maxAmount-minAmount, maxAmount-minAmount, remainAmount)
+				amount = rng.Int63n(tempRandAmount)
+			}
+		}
+
+		result[i] = minAmount + amount
+		remainAmount -= amount
+	}
+
+	rng.Shuffle(len(result), func(i, j int) {
+		result[i], result[j] = result[j], result[i]
+	})
+
+	return result
+}

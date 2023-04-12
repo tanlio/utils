@@ -1,13 +1,16 @@
 package utils
 
 import (
+	"bytes"
 	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"github.com/shopspring/decimal"
-	"io/ioutil"
+	"io"
+	"mime/multipart"
 	"net/http"
 	"net/url"
+	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -39,7 +42,7 @@ func PostRequest(uri string, param map[string]interface{}, header map[string]str
 		return "", err
 	}
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	}
@@ -72,7 +75,7 @@ func PostRequest2(uri string, param map[string]string, header map[string]string,
 		return "", err
 	}
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	}
@@ -105,7 +108,7 @@ func PostRequest3(uri string, param map[string]string, header map[string]string,
 		return "", err
 	}
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	}
@@ -155,7 +158,67 @@ func PostRequest4(uri string, param map[string]interface{}, header map[string]st
 		return "", err
 	}
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+	return string(body), nil
+}
+
+func PostRequest5(uri string, param map[string]string, file *os.File, header map[string]string, args ...interface{}) (string, error) {
+	data := url.Values{}
+	for k, v := range param {
+		data.Set(k, v)
+	}
+
+	client := &http.Client{}
+	if len(args) > 0 && reflect.TypeOf(args[0]).String() == "bool" && args[0].(bool) {
+		client.Transport = &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+	}
+
+	buf := new(bytes.Buffer)
+	bw := multipart.NewWriter(buf)
+
+	for k, v := range param {
+		if len(v) == 0 {
+			continue
+		}
+		pw, _ := bw.CreateFormField(k)
+		pw.Write([]byte(v))
+	}
+
+	//file
+	if file != nil {
+		var fileName string
+		for k, v := range param {
+			if len(v) != 0 {
+				continue
+			}
+			fileName = k
+			break
+		}
+		if len(fileName) != 0 {
+			fw, _ := bw.CreateFormFile(fileName, file.Name())
+			io.Copy(fw, file)
+		}
+	}
+
+	request, err := http.NewRequest("POST", uri, buf)
+	if request == nil {
+		return "", errors.New("build http request error")
+	}
+	for k, v := range header {
+		request.Header.Add(k, v)
+	}
+	request.Header.Set("Content-Type", "multipart/form-data")
+	resp, err := client.Do(request)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	}
@@ -188,7 +251,7 @@ func GetRequest(uri string, param map[string]string, header map[string]string, a
 		return "", err
 	}
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 
 	return string(body), err
 }
