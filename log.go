@@ -2,44 +2,65 @@ package utils
 
 import (
 	"fmt"
+	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"github.com/sirupsen/logrus"
 	"io"
 	"os"
-	"path"
 	"runtime"
+	"time"
 )
 
-var Logger = logrus.New()
+type LoggerManage struct {
+	logger *logrus.Logger
+}
+
+var Logger LoggerManage
 
 func init() {
-	Logger.SetReportCaller(true)
-	Logger.Formatter = &logrus.TextFormatter{
-		CallerPrettyfier: func(f *runtime.Frame) (string, string) {
-			filename := path.Base(f.File)
-			return fmt.Sprintf("%s()", f.Function), fmt.Sprintf("%s:%d", filename, f.Line)
-		},
+	logrusLogger := logrus.New()
+
+	logFile := "log.log"
+	// 每隔 4MB 分割日志文件
+	rotateInterval := 4 * 1024 * 1024
+
+	// 设置日志输出格式
+	logrusLogger.Formatter = &logrus.TextFormatter{}
+
+	writer, err := rotatelogs.New(
+		logFile+".%Y%m%d%H%M%S",
+		rotatelogs.WithLinkName(logFile),
+		rotatelogs.WithRotationSize(int64(rotateInterval)),
+		rotatelogs.WithMaxAge(time.Hour*24*7),
+	)
+	if err != nil {
+		fmt.Printf("Failed to create log rotate: %v", err)
+		os.Exit(-1)
 	}
-	Logger.Level = logrus.DebugLevel
-	file, err := os.OpenFile("log.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-	if err == nil {
-		Logger.Out = file
-	} else {
-		Logger.Info("Failed to log to file, using default stderr")
-	}
-	mw := io.MultiWriter(os.Stdout, file)
-	Logger.SetOutput(mw)
-	defer func() {
-		err := recover()
-		if err != nil {
-			entry := err.(*logrus.Entry)
-			Logger.WithFields(logrus.Fields{
-				"omg":         true,
-				"err_animal":  entry.Data["animal"],
-				"err_size":    entry.Data["size"],
-				"err_level":   entry.Level,
-				"err_message": entry.Message,
-				"number":      100,
-			}).Error("The ice breaks!") // or use Fatal() to force the process to exit with a nonzero code
-		}
-	}()
+
+	logWriter := io.MultiWriter(os.Stdout, writer)
+
+	logrusLogger.SetOutput(logWriter)
+	Logger.logger = logrusLogger
+}
+
+func (l LoggerManage) Warnln(args ...interface{}) {
+	_, file, line, _ := runtime.Caller(1)
+	l.logger.Warnln(file, line, args)
+}
+
+func (l LoggerManage) Infoln(args ...interface{}) {
+	_, file, line, _ := runtime.Caller(1)
+	l.logger.Infoln(file, line, args)
+}
+func (l LoggerManage) Errorln(args ...interface{}) {
+	_, file, line, _ := runtime.Caller(1)
+	l.logger.Errorln(file, line, args)
+}
+func (l LoggerManage) Debugln(args ...interface{}) {
+	_, file, line, _ := runtime.Caller(1)
+	l.logger.Debugln(file, line, args)
+}
+func (l LoggerManage) Errorf(args ...interface{}) {
+	_, file, line, _ := runtime.Caller(1)
+	l.logger.Errorf(file, line, args)
 }
