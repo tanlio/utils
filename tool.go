@@ -4,7 +4,9 @@ import (
 	"github.com/shopspring/decimal"
 	"math"
 	"math/rand"
+	"path/filepath"
 	"reflect"
+	"runtime"
 	"time"
 )
 
@@ -181,4 +183,31 @@ func GenerateRedPacket(totalAmount int64, num int64, maxAmount int64, minAmount 
 	})
 
 	return result
+}
+
+func GetProjectPath() string {
+	_, filename, _, ok := runtime.Caller(0)
+	if !ok {
+		panic("Failed to get current file path")
+	}
+
+	// 获取当前文件所在目录
+	dir := filepath.Dir(filename)
+
+	// 逐级向上遍历，直到找到项目根目录（假设项目根目录为包含"go.mod"文件的目录）
+	for {
+		files, err := filepath.Glob(filepath.Join(dir, "go.mod"))
+		if err == nil && len(files) > 0 {
+			return dir
+		}
+
+		// 到达文件系统根目录时停止遍历
+		if dir == "/" || dir == "." {
+			break
+		}
+
+		dir = filepath.Dir(dir)
+	}
+
+	panic("Failed to find project root directory")
 }
