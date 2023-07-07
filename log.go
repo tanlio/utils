@@ -47,7 +47,6 @@ func (l LoggerManage) Warnln(args ...interface{}) {
 	_, file, line, _ := runtime.Caller(1)
 	l.logger.Warnln(file, line, args)
 }
-
 func (l LoggerManage) Infoln(args ...interface{}) {
 	_, file, line, _ := runtime.Caller(1)
 	l.logger.Infoln(file, line, args)
@@ -59,8 +58,4 @@ func (l LoggerManage) Errorln(args ...interface{}) {
 func (l LoggerManage) Debugln(args ...interface{}) {
 	_, file, line, _ := runtime.Caller(1)
 	l.logger.Debugln(file, line, args)
-}
-func (l LoggerManage) Errorf(args ...interface{}) {
-	_, file, line, _ := runtime.Caller(1)
-	l.logger.Errorf(file, line, args)
 }

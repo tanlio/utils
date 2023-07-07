@@ -16,7 +16,16 @@ import (
 	"strings"
 )
 
-func PostRequest(uri string, param map[string]interface{}, header map[string]string, args ...interface{}) (string, error) {
+type RequestMethod string
+
+const (
+	RequestMethodGet    RequestMethod = "GET"    //get
+	RequestMethodPost   RequestMethod = "POST"   //post
+	RequestMethodPut    RequestMethod = "PUT"    //put
+	RequestMethodDelete RequestMethod = "DELETE" //delete
+)
+
+func PostRequest(method RequestMethod, uri string, param map[string]interface{}, header map[string]string, args ...interface{}) (string, error) {
 	paramJson, err := json.Marshal(param)
 	if err != nil {
 		return "", err
@@ -29,9 +38,9 @@ func PostRequest(uri string, param map[string]interface{}, header map[string]str
 		}
 	}
 
-	request, err := http.NewRequest("POST", uri, strings.NewReader(string(paramJson)))
+	request, err := http.NewRequest(string(method), uri, strings.NewReader(string(paramJson)))
 	if request == nil {
-		return "", errors.New("build http request error")
+		return "", err
 	}
 	for k, v := range header {
 		request.Header.Add(k, v)
@@ -49,7 +58,7 @@ func PostRequest(uri string, param map[string]interface{}, header map[string]str
 	return string(body), nil
 }
 
-func PostRequest2(uri string, param map[string]string, header map[string]string, args ...interface{}) (string, error) {
+func PostRequest2(method RequestMethod, uri string, param map[string]string, header map[string]string, args ...interface{}) (string, error) {
 	paramJson, err := json.Marshal(param)
 	if err != nil {
 		return "", err
@@ -62,9 +71,9 @@ func PostRequest2(uri string, param map[string]string, header map[string]string,
 		}
 	}
 
-	request, err := http.NewRequest("POST", uri, strings.NewReader(string(paramJson)))
+	request, err := http.NewRequest(string(method), uri, strings.NewReader(string(paramJson)))
 	if request == nil {
-		return "", errors.New("build http request error")
+		return "", err
 	}
 	for k, v := range header {
 		request.Header.Add(k, v)
@@ -82,7 +91,7 @@ func PostRequest2(uri string, param map[string]string, header map[string]string,
 	return string(body), nil
 }
 
-func PostRequest3(uri string, param map[string]string, header map[string]string, args ...interface{}) (string, error) {
+func PostRequest3(method RequestMethod, uri string, param map[string]string, header map[string]string, args ...interface{}) (string, error) {
 	data := url.Values{}
 	for k, v := range param {
 		data.Set(k, v)
@@ -95,9 +104,9 @@ func PostRequest3(uri string, param map[string]string, header map[string]string,
 		}
 	}
 
-	request, err := http.NewRequest("POST", uri, strings.NewReader(data.Encode()))
+	request, err := http.NewRequest(string(method), uri, strings.NewReader(data.Encode()))
 	if request == nil {
-		return "", errors.New("build http request error")
+		return "", err
 	}
 	for k, v := range header {
 		request.Header.Add(k, v)
@@ -115,7 +124,7 @@ func PostRequest3(uri string, param map[string]string, header map[string]string,
 	return string(body), nil
 }
 
-func PostRequest4(uri string, param map[string]interface{}, header map[string]string, args ...interface{}) (string, error) {
+func PostRequest4(method RequestMethod, uri string, param map[string]interface{}, header map[string]string, args ...interface{}) (string, error) {
 	data := url.Values{}
 	for k, v := range param {
 		switch reflect.TypeOf(v).String() {
@@ -145,9 +154,9 @@ func PostRequest4(uri string, param map[string]interface{}, header map[string]st
 		}
 	}
 
-	request, err := http.NewRequest("POST", uri, strings.NewReader(data.Encode()))
+	request, err := http.NewRequest(string(method), uri, strings.NewReader(data.Encode()))
 	if request == nil {
-		return "", errors.New("build http request error")
+		return "", err
 	}
 	for k, v := range header {
 		request.Header.Add(k, v)
@@ -165,7 +174,7 @@ func PostRequest4(uri string, param map[string]interface{}, header map[string]st
 	return string(body), nil
 }
 
-func PostRequest5(uri string, param map[string]string, file *os.File, header map[string]string, args ...interface{}) (string, error) {
+func PostRequest5(method RequestMethod, uri string, param map[string]string, file *os.File, header map[string]string, args ...interface{}) (string, error) {
 	data := url.Values{}
 	for k, v := range param {
 		data.Set(k, v)
@@ -205,9 +214,9 @@ func PostRequest5(uri string, param map[string]string, file *os.File, header map
 		}
 	}
 
-	request, err := http.NewRequest("POST", uri, buf)
+	request, err := http.NewRequest(string(method), uri, buf)
 	if request == nil {
-		return "", errors.New("build http request error")
+		return "", err
 	}
 	for k, v := range header {
 		request.Header.Add(k, v)
@@ -225,7 +234,7 @@ func PostRequest5(uri string, param map[string]string, file *os.File, header map
 	return string(body), nil
 }
 
-func GetRequest(uri string, param map[string]string, header map[string]string, args ...interface{}) (string, error) {
+func GetRequest(method RequestMethod, uri string, param map[string]string, header map[string]string, args ...interface{}) (string, error) {
 	data := url.Values{}
 	for k, v := range param {
 		data.Set(k, v)
@@ -242,7 +251,7 @@ func GetRequest(uri string, param map[string]string, header map[string]string, a
 		}
 	}
 
-	req, _ := http.NewRequest("GET", uri, nil)
+	req, _ := http.NewRequest(string(method), uri, nil)
 	for k, v := range header {
 		req.Header.Add(k, v)
 	}
