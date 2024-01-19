@@ -17,7 +17,7 @@ func TranslateLanguage(sourceLanguage, targetLanguage, text string, args ...inte
 	if len(targetLanguage) == 0 {
 		targetLanguage = "pt"
 	}
-	version := "baidu"
+	version := "huoshan"
 	if len(args) > 0 && reflect.TypeOf(args[0]).String() == "string" {
 		version = args[0].(string)
 	}
