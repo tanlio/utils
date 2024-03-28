@@ -40,7 +40,6 @@ func (e email) SendMail(toUser []string, userName, subject, body string, attach 
 
 	d := gomail.NewDialer(e.Host, e.Port, e.FromUser, e.FromPassword)
 	if err := d.DialAndSend(m); err != nil {
-		Logger.Infoln("-----------SendMail", toUser[0], err)
 		return err
 	}
 
