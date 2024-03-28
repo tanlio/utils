@@ -83,15 +83,24 @@ func FloatDiv(f1, f2 float64) float64 {
 	return ff
 }
 
-func Timestamp2Str(timestamp int64) string {
+func Timestamp2Str(timestamp int64, args ...interface{}) string {
 	if timestamp == 0 {
 		return ""
 	}
-	return time.Unix(timestamp, 0).Format("2006-01-02 15:04:05")
+
+	format := time.DateTime
+	if len(args) > 0 && reflect.TypeOf(args[0]).String() == "string" {
+		format = args[0].(string)
+	}
+	return time.Unix(timestamp, 0).Format(format)
 }
 
-func Str2Timestamp(str string) int64 {
-	locationTime, _ := time.ParseInLocation("2006-01-02 15:04:05", str, time.Local)
+func Str2Timestamp(str string, args ...interface{}) int64 {
+	format := time.DateTime
+	if len(args) > 0 && reflect.TypeOf(args[0]).String() == "string" {
+		format = args[0].(string)
+	}
+	locationTime, _ := time.ParseInLocation(format, str, time.Local)
 	return locationTime.Unix()
 }
 
