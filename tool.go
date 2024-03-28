@@ -185,3 +185,13 @@ func GenerateRedPacket(totalAmount int64, num int64, maxAmount int64, minAmount 
 
 	return result
 }
+
+func SliceToSlice[T any, V any](array []T, iteratee func(T) V) []V {
+	result := make([]V, 0)
+	for _, item := range array {
+		k := iteratee(item)
+		result = append(result, k)
+	}
+
+	return result
+}
