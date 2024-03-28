@@ -1,4 +1,4 @@
-module utils
+module github.com/tanlio/utils
 
 go 1.21.5
 
