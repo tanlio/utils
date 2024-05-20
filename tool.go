@@ -52,6 +52,13 @@ func IfFloat64(cond bool, trueFloat64 float64, falseFloat64 float64) float64 {
 	}
 }
 
+func IfTernary(a bool, b, c interface{}) interface{} {
+	if a {
+		return b
+	}
+	return c
+}
+
 // 加法
 
 func FloatAdd(f1, f2 float64) float64 {
