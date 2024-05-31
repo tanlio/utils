@@ -25,10 +25,10 @@ const (
 	RequestMethodDelete RequestMethod = "DELETE" //delete
 )
 
-func PostRequest(method RequestMethod, uri string, param map[string]interface{}, header map[string]string, args ...interface{}) (string, error) {
+func PostRequest(method RequestMethod, uri string, param map[string]interface{}, header map[string]string, args ...interface{}) (int, string, error) {
 	paramJson, err := json.Marshal(param)
 	if err != nil {
-		return "", err
+		return 0, "", err
 	}
 
 	client := &http.Client{}
@@ -40,7 +40,7 @@ func PostRequest(method RequestMethod, uri string, param map[string]interface{},
 
 	request, err := http.NewRequest(string(method), uri, strings.NewReader(string(paramJson)))
 	if request == nil {
-		return "", err
+		return 0, "", err
 	}
 	for k, v := range header {
 		request.Header.Add(k, v)
@@ -48,20 +48,20 @@ func PostRequest(method RequestMethod, uri string, param map[string]interface{},
 	request.Header.Set("Content-Type", "application/json")
 	resp, err := client.Do(request)
 	if err != nil {
-		return "", err
+		return 0, "", err
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+		return resp.StatusCode, "", err
 	}
-	return string(body), nil
+	return resp.StatusCode, string(body), nil
 }
 
-func PostRequest2(method RequestMethod, uri string, param map[string]string, header map[string]string, args ...interface{}) (string, error) {
+func PostRequest2(method RequestMethod, uri string, param map[string]string, header map[string]string, args ...interface{}) (int, string, error) {
 	paramJson, err := json.Marshal(param)
 	if err != nil {
-		return "", err
+		return 0, "", err
 	}
 
 	client := &http.Client{}
@@ -73,7 +73,7 @@ func PostRequest2(method RequestMethod, uri string, param map[string]string, hea
 
 	request, err := http.NewRequest(string(method), uri, strings.NewReader(string(paramJson)))
 	if request == nil {
-		return "", err
+		return 0, "", err
 	}
 	for k, v := range header {
 		request.Header.Add(k, v)
@@ -81,17 +81,17 @@ func PostRequest2(method RequestMethod, uri string, param map[string]string, hea
 	request.Header.Set("Content-Type", "application/json")
 	resp, err := client.Do(request)
 	if err != nil {
-		return "", err
+		return 0, "", err
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+		return resp.StatusCode, "", err
 	}
-	return string(body), nil
+	return resp.StatusCode, string(body), nil
 }
 
-func PostRequest3(method RequestMethod, uri string, param map[string]string, header map[string]string, args ...interface{}) (string, error) {
+func PostRequest3(method RequestMethod, uri string, param map[string]string, header map[string]string, args ...interface{}) (int, string, error) {
 	data := url.Values{}
 	for k, v := range param {
 		data.Set(k, v)
@@ -106,7 +106,7 @@ func PostRequest3(method RequestMethod, uri string, param map[string]string, hea
 
 	request, err := http.NewRequest(string(method), uri, strings.NewReader(data.Encode()))
 	if request == nil {
-		return "", err
+		return 0, "", err
 	}
 	for k, v := range header {
 		request.Header.Add(k, v)
@@ -114,17 +114,17 @@ func PostRequest3(method RequestMethod, uri string, param map[string]string, hea
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	resp, err := client.Do(request)
 	if err != nil {
-		return "", err
+		return 0, "", err
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+		return resp.StatusCode, "", err
 	}
-	return string(body), nil
+	return resp.StatusCode, string(body), nil
 }
 
-func PostRequest4(method RequestMethod, uri string, param map[string]interface{}, header map[string]string, args ...interface{}) (string, error) {
+func PostRequest4(method RequestMethod, uri string, param map[string]interface{}, header map[string]string, args ...interface{}) (int, string, error) {
 	data := url.Values{}
 	for k, v := range param {
 		switch reflect.TypeOf(v).String() {
@@ -143,7 +143,7 @@ func PostRequest4(method RequestMethod, uri string, param map[string]interface{}
 		case "bool":
 			data.Set(k, IfString(v.(bool), "true", "false"))
 		default:
-			return "", errors.New("Parameter format error")
+			return 0, "", errors.New("Parameter format error")
 		}
 	}
 
@@ -156,7 +156,7 @@ func PostRequest4(method RequestMethod, uri string, param map[string]interface{}
 
 	request, err := http.NewRequest(string(method), uri, strings.NewReader(data.Encode()))
 	if request == nil {
-		return "", err
+		return 0, "", err
 	}
 	for k, v := range header {
 		request.Header.Add(k, v)
@@ -164,17 +164,17 @@ func PostRequest4(method RequestMethod, uri string, param map[string]interface{}
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	resp, err := client.Do(request)
 	if err != nil {
-		return "", err
+		return 0, "", err
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+		return resp.StatusCode, "", err
 	}
-	return string(body), nil
+	return resp.StatusCode, string(body), nil
 }
 
-func PostRequest5(method RequestMethod, uri string, param map[string]string, file *os.File, header map[string]string, args ...interface{}) (string, error) {
+func PostRequest5(method RequestMethod, uri string, param map[string]string, file *os.File, header map[string]string, args ...interface{}) (int, string, error) {
 	data := url.Values{}
 	for k, v := range param {
 		data.Set(k, v)
@@ -216,7 +216,7 @@ func PostRequest5(method RequestMethod, uri string, param map[string]string, fil
 
 	request, err := http.NewRequest(string(method), uri, buf)
 	if request == nil {
-		return "", err
+		return 0, "", err
 	}
 	for k, v := range header {
 		request.Header.Add(k, v)
@@ -224,17 +224,17 @@ func PostRequest5(method RequestMethod, uri string, param map[string]string, fil
 	request.Header.Set("Content-Type", "multipart/form-data")
 	resp, err := client.Do(request)
 	if err != nil {
-		return "", err
+		return 0, "", err
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+		return resp.StatusCode, "", err
 	}
-	return string(body), nil
+	return resp.StatusCode, string(body), nil
 }
 
-func GetRequest(method RequestMethod, uri string, param map[string]string, header map[string]string, args ...interface{}) (string, error) {
+func GetRequest(method RequestMethod, uri string, param map[string]string, header map[string]string, args ...interface{}) (int, string, error) {
 	data := url.Values{}
 	for k, v := range param {
 		data.Set(k, v)
@@ -257,10 +257,10 @@ func GetRequest(method RequestMethod, uri string, param map[string]string, heade
 	}
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", err
+		return 0, "", err
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 
-	return string(body), err
+	return resp.StatusCode, string(body), err
 }
