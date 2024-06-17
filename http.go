@@ -16,6 +16,19 @@ import (
 	"strings"
 )
 
+func Values2Map(body []byte) (map[string]string, []byte) {
+	values, _ := url.ParseQuery(string(body))
+	parsedData := make(map[string]string)
+	for key, v := range values {
+		if len(v) > 0 {
+			parsedData[key] = v[0]
+		}
+	}
+	data, _ := json.Marshal(parsedData)
+
+	return parsedData, data
+}
+
 type RequestMethod string
 
 const (
