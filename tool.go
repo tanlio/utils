@@ -12,44 +12,51 @@ var Rander = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 //三目运算
 
-func IfInt(cond bool, trueInt int, falseInt int) int {
-	if cond {
+func IfInt(condition bool, trueInt int, falseInt int) int {
+	if condition {
 		return trueInt
 	} else {
 		return falseInt
 	}
 }
 
-func IfBool(cond bool, trueBool bool, falseBool bool) bool {
-	if cond {
+func IfBool(condition bool, trueBool bool, falseBool bool) bool {
+	if condition {
 		return trueBool
 	} else {
 		return falseBool
 	}
 }
 
-func IfInt64(cond bool, trueInt64 int64, falseInt64 int64) int64 {
-	if cond {
+func IfInt64(condition bool, trueInt64 int64, falseInt64 int64) int64 {
+	if condition {
 		return trueInt64
 	} else {
 		return falseInt64
 	}
 }
 
-func IfString(cond bool, trueString string, falseString string) string {
-	if cond {
+func IfString(condition bool, trueString string, falseString string) string {
+	if condition {
 		return trueString
 	} else {
 		return falseString
 	}
 }
 
-func IfFloat64(cond bool, trueFloat64 float64, falseFloat64 float64) float64 {
-	if cond {
+func IfFloat64(condition bool, trueFloat64 float64, falseFloat64 float64) float64 {
+	if condition {
 		return trueFloat64
 	} else {
 		return falseFloat64
 	}
+}
+
+func If(condition bool, trueVal, falseVal interface{}) interface{} {
+	if condition {
+		return trueVal
+	}
+	return falseVal
 }
 
 func IfTernary(a bool, b, c interface{}) interface{} {
