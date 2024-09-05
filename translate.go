@@ -28,7 +28,7 @@ func TranslateLanguage(sourceLanguage, targetLanguage, text string, args ...inte
 	param["source_language"] = sourceLanguage
 	param["target_language"] = targetLanguage
 	param["version"] = version
-	response, err := GetRequest(RequestMethodGet, uri, param, nil)
+	_, response, err := GetRequest(RequestMethodGet, uri, param, nil)
 	if err != nil {
 		fmt.Println("-----------TranslateLanguage", err)
 		return text
