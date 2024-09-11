@@ -11,13 +11,10 @@ func TranslateLanguage(sourceLanguage, targetLanguage, text string, args ...inte
 	if runtime.GOOS != "linux" {
 		return text
 	}
-	if len(sourceLanguage) == 0 {
-		sourceLanguage = "auto"
-	}
 	if len(targetLanguage) == 0 {
-		targetLanguage = "pt"
+		return text
 	}
-	version := "huoshan"
+	var version string
 	if len(args) > 0 && reflect.TypeOf(args[0]).String() == "string" {
 		version = args[0].(string)
 	}
