@@ -247,6 +247,34 @@ func PostRequest5(method RequestMethod, uri string, param map[string]string, fil
 	return resp.StatusCode, string(body), nil
 }
 
+func PostRequest6(method RequestMethod, uri string, paramData []byte, header map[string]string, args ...interface{}) (int, string, error) {
+	client := &http.Client{}
+	if len(args) > 0 && reflect.TypeOf(args[0]).String() == "bool" && args[0].(bool) {
+		client.Transport = &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+	}
+
+	request, err := http.NewRequest(string(method), uri, strings.NewReader(string(paramData)))
+	if request == nil {
+		return 0, "", err
+	}
+	for k, v := range header {
+		request.Header.Add(k, v)
+	}
+	request.Header.Set("Content-Type", "application/json")
+	resp, err := client.Do(request)
+	if err != nil {
+		return 0, "", err
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return resp.StatusCode, "", err
+	}
+	return resp.StatusCode, string(body), nil
+}
+
 func GetRequest(method RequestMethod, uri string, param map[string]string, header map[string]string, args ...interface{}) (int, string, error) {
 	data := url.Values{}
 	for k, v := range param {
