@@ -14,6 +14,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func Values2Map(body []byte) (map[string]string, []byte) {
@@ -48,6 +49,7 @@ func PostRequest(method RequestMethod, uri string, param map[string]interface{},
 	if len(args) > 0 && reflect.TypeOf(args[0]).String() == "bool" && args[0].(bool) {
 		client.Transport = &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			IdleConnTimeout: 30 * time.Second,
 		}
 	}
 
@@ -81,6 +83,7 @@ func PostRequest2(method RequestMethod, uri string, param map[string]string, hea
 	if len(args) > 0 && reflect.TypeOf(args[0]).String() == "bool" && args[0].(bool) {
 		client.Transport = &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			IdleConnTimeout: 30 * time.Second,
 		}
 	}
 
@@ -114,6 +117,7 @@ func PostRequest3(method RequestMethod, uri string, param map[string]string, hea
 	if len(args) > 0 && reflect.TypeOf(args[0]).String() == "bool" && args[0].(bool) {
 		client.Transport = &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			IdleConnTimeout: 30 * time.Second,
 		}
 	}
 
@@ -164,6 +168,7 @@ func PostRequest4(method RequestMethod, uri string, param map[string]interface{}
 	if len(args) > 0 && reflect.TypeOf(args[0]).String() == "bool" && args[0].(bool) {
 		client.Transport = &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			IdleConnTimeout: 30 * time.Second,
 		}
 	}
 
@@ -197,6 +202,7 @@ func PostRequest5(method RequestMethod, uri string, param map[string]string, fil
 	if len(args) > 0 && reflect.TypeOf(args[0]).String() == "bool" && args[0].(bool) {
 		client.Transport = &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			IdleConnTimeout: 30 * time.Second,
 		}
 	}
 
@@ -252,6 +258,7 @@ func PostRequest6(method RequestMethod, uri string, paramData []byte, header map
 	if len(args) > 0 && reflect.TypeOf(args[0]).String() == "bool" && args[0].(bool) {
 		client.Transport = &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			IdleConnTimeout: 30 * time.Second,
 		}
 	}
 
@@ -289,6 +296,7 @@ func GetRequest(method RequestMethod, uri string, param map[string]string, heade
 	if len(args) > 0 && reflect.TypeOf(args[0]).String() == "bool" && args[0].(bool) {
 		client.Transport = &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			IdleConnTimeout: 30 * time.Second,
 		}
 	}
 
