@@ -128,7 +128,7 @@ type GetIPAddressResponse struct {
 	}
 }
 
-func GetIPAddress(ip string) (GetIPAddressResponse, error) {
+func GetIPAddress(ip string) GetIPAddressResponse {
 	uri := "http://" + "geoip:8080" + "/api/geo/geo-country"
 
 	param := make(map[string]string)
@@ -136,7 +136,7 @@ func GetIPAddress(ip string) (GetIPAddressResponse, error) {
 
 	_, response, err := GetRequest(RequestMethodGet, uri, param, nil)
 	if err != nil {
-		return GetIPAddressResponse{}, err
+		return GetIPAddressResponse{}
 	}
 
 	var ipAddressResponse GetIPAddressResponse
@@ -145,5 +145,5 @@ func GetIPAddress(ip string) (GetIPAddressResponse, error) {
 		json.Unmarshal([]byte(ipAddressResponse.Data.GeoData), &ipAddressResponse.Data.IPAddressResponse)
 	}
 
-	return ipAddressResponse, nil
+	return ipAddressResponse
 }
