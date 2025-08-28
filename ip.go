@@ -147,3 +147,186 @@ func GetIPAddress(ip string) GetIPAddressResponse {
 
 	return ipAddressResponse
 }
+
+//{
+//	"traits": {
+//		"ip_address": "113.248.171.111",
+//		"network": "113.248.160.0/19"
+//	},
+//	"continent": {
+//		"names": {
+//			"de": "Asien",
+//			"en": "Asia",
+//			"es": "Asia",
+//			"fr": "Asie",
+//			"ja": "アジア",
+//			"pt-BR": "Ásia",
+//			"ru": "Азия",
+//			"zh-CN": "亚洲"
+//		},
+//		"code": "AS",
+//		"geoname_id": 6255147
+//	},
+//	"city": {
+//		"names": {
+//			"de": "Chongqing",
+//			"en": "Chongqing",
+//			"es": "Chongqing",
+//			"fr": "Chongqing",
+//			"ja": "重慶市",
+//			"pt-BR": "Chongqing",
+//			"ru": "Чунцин",
+//			"zh-CN": "重庆市"
+//		},
+//		"geoname_id": 1814906
+//	},
+//	"subdivisions": [{
+//		"names": {
+//			"en": "Chongqing",
+//			"fr": "Municipalité de Chongqing",
+//			"zh-CN": "重庆"
+//		},
+//		"iso_code": "CQ",
+//		"geoname_id": 1814905
+//	}],
+//	"country": {
+//		"names": {
+//			"de": "China",
+//			"en": "China",
+//			"es": "China",
+//			"fr": "Chine",
+//			"ja": "中国",
+//			"pt-BR": "China",
+//			"ru": "Китай",
+//			"zh-CN": "中国"
+//		},
+//		"iso_code": "CN",
+//		"geoname_id": 1814991
+//	},
+//	"registered_country": {
+//		"names": {
+//			"de": "China",
+//			"en": "China",
+//			"es": "China",
+//			"fr": "Chine",
+//			"ja": "中国",
+//			"pt-BR": "China",
+//			"ru": "Китай",
+//			"zh-CN": "中国"
+//		},
+//		"iso_code": "CN",
+//		"geoname_id": 1814991
+//	},
+//	"location": {
+//		"latitude": 29.5689,
+//		"longitude": 106.5577,
+//		"time_zone": "Asia/Shanghai",
+//		"accuracy_radius": 1000
+//	}
+//}
+
+type IPCityResponse struct {
+	Traits struct {
+		IpAddress string `json:"ip_address"`
+		Network   string `json:"network"`
+	} `json:"traits"`
+	Continent struct {
+		Names struct {
+			De   string `json:"de"`
+			En   string `json:"en"`
+			Es   string `json:"es"`
+			Fr   string `json:"fr"`
+			Ja   string `json:"ja"`
+			PtBR string `json:"pt-BR"`
+			Ru   string `json:"ru"`
+			ZhCN string `json:"zh-CN"`
+		} `json:"names"`
+		Code      string `json:"code"`
+		GeonameId int    `json:"geoname_id"`
+	} `json:"continent"`
+	City struct {
+		Names struct {
+			De   string `json:"de"`
+			En   string `json:"en"`
+			Es   string `json:"es"`
+			Fr   string `json:"fr"`
+			Ja   string `json:"ja"`
+			PtBR string `json:"pt-BR"`
+			Ru   string `json:"ru"`
+			ZhCN string `json:"zh-CN"`
+		} `json:"names"`
+		GeonameId int `json:"geoname_id"`
+	} `json:"city"`
+	Subdivisions []struct {
+		Names struct {
+			En   string `json:"en"`
+			Fr   string `json:"fr"`
+			ZhCN string `json:"zh-CN"`
+		} `json:"names"`
+		IsoCode   string `json:"iso_code"`
+		GeonameId int    `json:"geoname_id"`
+	} `json:"subdivisions"`
+	Country struct {
+		Names struct {
+			De   string `json:"de"`
+			En   string `json:"en"`
+			Es   string `json:"es"`
+			Fr   string `json:"fr"`
+			Ja   string `json:"ja"`
+			PtBR string `json:"pt-BR"`
+			Ru   string `json:"ru"`
+			ZhCN string `json:"zh-CN"`
+		} `json:"names"`
+		IsoCode   string `json:"iso_code"`
+		GeonameId int    `json:"geoname_id"`
+	} `json:"country"`
+	RegisteredCountry struct {
+		Names struct {
+			De   string `json:"de"`
+			En   string `json:"en"`
+			Es   string `json:"es"`
+			Fr   string `json:"fr"`
+			Ja   string `json:"ja"`
+			PtBR string `json:"pt-BR"`
+			Ru   string `json:"ru"`
+			ZhCN string `json:"zh-CN"`
+		} `json:"names"`
+		IsoCode   string `json:"iso_code"`
+		GeonameId int    `json:"geoname_id"`
+	} `json:"registered_country"`
+	Location struct {
+		Latitude       float64 `json:"latitude"`
+		Longitude      float64 `json:"longitude"`
+		TimeZone       string  `json:"time_zone"`
+		AccuracyRadius int     `json:"accuracy_radius"`
+	} `json:"location"`
+}
+
+type GetIPCityResponse struct {
+	Code int    `json:"code"`
+	Msg  string `json:"msg"`
+	Data struct {
+		GeoData string `json:"geo_data"`
+		IPCityResponse
+	}
+}
+
+func GetIPCity(ip string) GetIPCityResponse {
+	uri := "http://" + "geoip:8080" + "/api/geo/geo-city"
+
+	param := make(map[string]string)
+	param["ip"] = ip
+
+	_, response, err := GetRequest(RequestMethodGet, uri, param, nil)
+	if err != nil {
+		return GetIPCityResponse{}
+	}
+
+	var ipAddressResponse GetIPCityResponse
+	json.Unmarshal([]byte(response), &ipAddressResponse)
+	if ipAddressResponse.Code == 200 {
+		json.Unmarshal([]byte(ipAddressResponse.Data.GeoData), &ipAddressResponse.Data.IPCityResponse)
+	}
+
+	return ipAddressResponse
+}
