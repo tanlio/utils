@@ -70,10 +70,8 @@ func RequestForm(method, uri string, paramJson []byte, header map[string]string,
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return resp.StatusCode, nil, err
-	}
-	return resp.StatusCode, body, nil
+
+	return resp.StatusCode, body, err
 }
 
 func RequestJson(method, uri string, paramJson []byte, header map[string]string, args ...any) (int, []byte, error) {
