@@ -16,6 +16,16 @@ func getScale(defaultScale int32, args ...int32) int32 {
 
 func decimalFromAny(price any) (decimal.Decimal, bool) {
 	switch v := price.(type) {
+	case nil:
+		return decimal.Decimal{}, false
+
+	case decimal.Decimal:
+		return v, true
+	case *decimal.Decimal:
+		if v == nil {
+			return decimal.Decimal{}, false
+		}
+		return *v, true
 	case string:
 		d, err := decimal.NewFromString(v)
 		if err != nil {
@@ -46,14 +56,19 @@ func decimalFromAny(price any) (decimal.Decimal, bool) {
 	}
 }
 
-func Fen2Yuan(price int64, args ...int32) string {
-	if price == 0 {
-		return "0"
-	}
+func Fen2Yuan(price any, args ...int32) string {
 	scale := getScale(2, args...)
 
+	dPrice, ok := decimalFromAny(price)
+	if !ok {
+		return "0"
+	}
+	if dPrice.IsZero() {
+		return "0"
+	}
+
 	d := decimal.New(1, scale)
-	return decimal.NewFromInt(price).DivRound(d, scale).String()
+	return dPrice.DivRound(d, scale).String()
 }
 
 func Yuan2Fen(price any, args ...int32) int64 {
@@ -63,6 +78,9 @@ func Yuan2Fen(price any, args ...int32) int64 {
 	if !ok {
 		return 0
 	}
+	if dPrice.IsZero() {
+		return 0
+	}
 
 	d := decimal.New(1, scale)
 	result := dPrice.Mul(d).Round(0)
@@ -70,14 +88,16 @@ func Yuan2Fen(price any, args ...int32) int64 {
 	return result.IntPart()
 }
 
-func Fen2YuanBig(price *big.Int, args ...int32) string {
-	if price == nil {
-		return "0"
-	}
-
+func Fen2YuanBig(price any, args ...int32) string {
 	scale := getScale(8, args...)
 
-	dPrice := decimal.NewFromBigInt(price, 0)
+	dPrice, ok := decimalFromAny(price)
+	if !ok {
+		return "0"
+	}
+	if dPrice.IsZero() {
+		return "0"
+	}
 
 	d := decimal.New(1, scale)
 	result := dPrice.DivRound(d, scale)
@@ -90,6 +110,9 @@ func Yuan2FenBig(price any, args ...int32) *big.Int {
 
 	dPrice, ok := decimalFromAny(price)
 	if !ok {
+		return big.NewInt(0)
+	}
+	if dPrice.IsZero() {
 		return big.NewInt(0)
 	}
 
