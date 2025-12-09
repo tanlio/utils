@@ -1,14 +1,13 @@
 package utils
 
 import (
+	"errors"
 	"github.com/shopspring/decimal"
 	"math"
-	"math/rand"
+	"math/rand/v2"
 	"reflect"
 	"time"
 )
-
-var Rander = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 //三目运算
 
@@ -160,7 +159,7 @@ const (
 )
 
 func RandString(strType RandType, args ...interface{}) string {
-	n := Rander.Intn(10) + 5
+	n := rand.IntN(10) + 5
 	if len(args) > 0 && reflect.TypeOf(args[0]).String() == "int" {
 		n = args[0].(int)
 	}
@@ -183,45 +182,55 @@ func RandString(strType RandType, args ...interface{}) string {
 	}
 
 	for i := 0; i < n && len(sourceStr) > 0; i++ {
-		randNum := Rander.Intn(len(sourceStr))
+		randNum := rand.IntN(len(sourceStr))
 		targetStr += string(sourceStr[randNum])
 	}
 
 	return targetStr
 }
 
-func GenerateRedPacket(totalAmount int64, num int64, maxAmount int64, minAmount int64, rng *rand.Rand) []int64 {
+func GenerateRedPacket(totalAmount int64, num int64, maxAmount int64, minAmount int64) ([]int64, error) {
+	if totalAmount <= 0 || num <= 0 {
+		return nil, errors.New("invalid configuration: totalAmount and num must be > 0")
+	}
+	if minAmount < 0 || maxAmount < minAmount {
+		return nil, errors.New("invalid configuration: min/max amount")
+	}
+	if totalAmount < num*minAmount || totalAmount > num*maxAmount {
+		return nil, errors.New("invalid configuration: totalAmount not in [num*min, num*max]")
+	}
+
 	result := make([]int64, num)
-	var averageAmount = totalAmount / num
-	if maxAmount < averageAmount || minAmount > averageAmount {
-		return result
+	for i := range result {
+		result[i] = minAmount
 	}
 
-	if rng == nil {
-		rng = Rander
-	}
-
-	remainAmount := totalAmount - minAmount*num
-	for i := 0; i < int(num); i++ {
-		var amount int64
-		if i == int(num-1) {
-			amount = remainAmount
-		} else {
-			if remainAmount != 0 {
-				tempRandAmount := IfInt64(remainAmount > maxAmount-minAmount, maxAmount-minAmount, remainAmount)
-				amount = rng.Int63n(tempRandAmount)
-			}
+	remainAmount := totalAmount - num*minAmount
+	for remainAmount > 0 {
+		idx := rand.IntN(int(num))
+		if result[idx] >= maxAmount {
+			continue
 		}
 
-		result[i] = minAmount + amount
-		remainAmount -= amount
+		maxGive := maxAmount - result[idx]
+		if maxGive > remainAmount {
+			maxGive = remainAmount
+		}
+
+		if maxGive <= 0 {
+			continue
+		}
+
+		give := rand.Int64N(maxGive) + 1
+		result[idx] += give
+		remainAmount -= give
 	}
 
-	rng.Shuffle(len(result), func(i, j int) {
+	rand.Shuffle(int(num), func(i, j int) {
 		result[i], result[j] = result[j], result[i]
 	})
 
-	return result
+	return result, nil
 }
 
 func SliceToSlice[T any, V any](array []T, iteratee func(T) V) []V {
