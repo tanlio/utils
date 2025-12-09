@@ -3,6 +3,8 @@ package utils
 import (
 	"bytes"
 	"crypto/tls"
+	"encoding/json"
+	"fmt"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -30,7 +32,7 @@ var (
 const defaultUserAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1"
 
 func pickHTTPClient(args ...any) *http.Client {
-	if len(args) >= 0 {
+	if len(args) > 0 {
 		if v, ok := args[0].(bool); ok && v {
 			return insecureHTTPClient
 		}
@@ -39,16 +41,18 @@ func pickHTTPClient(args ...any) *http.Client {
 	return defaultHTTPClient
 }
 
-func RequestForm(method, uri string, param map[string]string, header map[string]string, args ...any) (int, []byte, error) {
+func RequestForm(method, uri string, paramJson []byte, header map[string]string, args ...any) (int, []byte, error) {
 	client := pickHTTPClient(args...)
 
-	form := url.Values{}
-	for k, v := range param {
-		form.Set(k, v)
-	}
-	bodyReader := strings.NewReader(form.Encode())
+	var m map[string]interface{}
+	json.Unmarshal(paramJson, &m)
 
-	req, err := http.NewRequest(method, uri, bodyReader)
+	values := url.Values{}
+	for k, v := range m {
+		values.Set(k, fmt.Sprint(v))
+	}
+
+	req, err := http.NewRequest(method, uri, strings.NewReader(values.Encode()))
 	if err != nil {
 		return 0, nil, err
 	}
@@ -72,10 +76,10 @@ func RequestForm(method, uri string, param map[string]string, header map[string]
 	return resp.StatusCode, body, nil
 }
 
-func RequestJson(method, uri string, paramData []byte, header map[string]string, args ...any) (int, []byte, error) {
+func RequestJson(method, uri string, paramJson []byte, header map[string]string, args ...any) (int, []byte, error) {
 	client := pickHTTPClient(args...)
 
-	req, err := http.NewRequest(method, uri, bytes.NewReader(paramData))
+	req, err := http.NewRequest(method, uri, bytes.NewReader(paramJson))
 	if err != nil {
 		return 0, nil, err
 	}
