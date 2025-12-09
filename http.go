@@ -3,313 +3,181 @@ package utils
 import (
 	"bytes"
 	"crypto/tls"
-	"encoding/json"
-	"errors"
-	"github.com/shopspring/decimal"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"net/url"
 	"os"
-	"reflect"
-	"strconv"
+	"path/filepath"
 	"strings"
 	"time"
 )
 
-func Values2Map(body []byte) (map[string]string, []byte) {
-	values, _ := url.ParseQuery(string(body))
-	parsedData := make(map[string]string)
-	for key, v := range values {
-		if len(v) > 0 {
-			parsedData[key] = v[0]
-		}
+var (
+	defaultHTTPClient = &http.Client{
+		Timeout: 30 * time.Second,
 	}
-	data, _ := json.Marshal(parsedData)
 
-	return parsedData, data
-}
-
-type RequestMethod string
-
-const (
-	RequestMethodGet    RequestMethod = "GET"    //get
-	RequestMethodPost   RequestMethod = "POST"   //post
-	RequestMethodPut    RequestMethod = "PUT"    //put
-	RequestMethodDelete RequestMethod = "DELETE" //delete
+	insecureHTTPClient = &http.Client{
+		Timeout: 30 * time.Second,
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			IdleConnTimeout: 30 * time.Second,
+		},
+	}
 )
 
-func PostRequest(method RequestMethod, uri string, param map[string]interface{}, header map[string]string, args ...interface{}) (int, string, error) {
-	paramJson, err := json.Marshal(param)
-	if err != nil {
-		return 0, "", err
-	}
+const defaultUserAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1"
 
-	client := &http.Client{}
-	if len(args) > 0 && reflect.TypeOf(args[0]).String() == "bool" && args[0].(bool) {
-		client.Transport = &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-			IdleConnTimeout: 30 * time.Second,
+func pickHTTPClient(args ...any) *http.Client {
+	if len(args) >= 0 {
+		if v, ok := args[0].(bool); ok && v {
+			return insecureHTTPClient
 		}
 	}
 
-	request, err := http.NewRequest(string(method), uri, strings.NewReader(string(paramJson)))
-	if request == nil {
-		return 0, "", err
-	}
-	for k, v := range header {
-		request.Header.Add(k, v)
-	}
-	request.Header.Set("Content-Type", "application/json")
-	resp, err := client.Do(request)
-	if err != nil {
-		return 0, "", err
-	}
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return resp.StatusCode, "", err
-	}
-	return resp.StatusCode, string(body), nil
+	return defaultHTTPClient
 }
 
-func PostRequest2(method RequestMethod, uri string, param map[string]string, header map[string]string, args ...interface{}) (int, string, error) {
-	paramJson, err := json.Marshal(param)
-	if err != nil {
-		return 0, "", err
-	}
+func RequestForm(method, uri string, param map[string]string, header map[string]string, args ...any) (int, []byte, error) {
+	client := pickHTTPClient(args...)
 
-	client := &http.Client{}
-	if len(args) > 0 && reflect.TypeOf(args[0]).String() == "bool" && args[0].(bool) {
-		client.Transport = &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-			IdleConnTimeout: 30 * time.Second,
-		}
-	}
-
-	request, err := http.NewRequest(string(method), uri, strings.NewReader(string(paramJson)))
-	if request == nil {
-		return 0, "", err
-	}
-	for k, v := range header {
-		request.Header.Add(k, v)
-	}
-	request.Header.Set("Content-Type", "application/json")
-	resp, err := client.Do(request)
-	if err != nil {
-		return 0, "", err
-	}
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return resp.StatusCode, "", err
-	}
-	return resp.StatusCode, string(body), nil
-}
-
-func PostRequest3(method RequestMethod, uri string, param map[string]string, header map[string]string, args ...interface{}) (int, string, error) {
-	data := url.Values{}
+	form := url.Values{}
 	for k, v := range param {
-		data.Set(k, v)
+		form.Set(k, v)
 	}
+	bodyReader := strings.NewReader(form.Encode())
 
-	client := &http.Client{}
-	if len(args) > 0 && reflect.TypeOf(args[0]).String() == "bool" && args[0].(bool) {
-		client.Transport = &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-			IdleConnTimeout: 30 * time.Second,
-		}
-	}
-
-	request, err := http.NewRequest(string(method), uri, strings.NewReader(data.Encode()))
-	if request == nil {
-		return 0, "", err
-	}
-	for k, v := range header {
-		request.Header.Add(k, v)
-	}
-	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	resp, err := client.Do(request)
+	req, err := http.NewRequest(method, uri, bodyReader)
 	if err != nil {
-		return 0, "", err
+		return 0, nil, err
+	}
+
+	req.Header.Set("User-Agent", defaultUserAgent)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	for k, v := range header {
+		req.Header.Set(k, v)
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return 0, nil, err
 	}
 	defer resp.Body.Close()
+
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return resp.StatusCode, "", err
+		return resp.StatusCode, nil, err
 	}
-	return resp.StatusCode, string(body), nil
+	return resp.StatusCode, body, nil
 }
 
-func PostRequest4(method RequestMethod, uri string, param map[string]interface{}, header map[string]string, args ...interface{}) (int, string, error) {
-	data := url.Values{}
-	for k, v := range param {
-		switch reflect.TypeOf(v).String() {
-		case "int":
-			data.Set(k, strconv.Itoa(v.(int)))
-		case "int32":
-			data.Set(k, strconv.Itoa(int(v.(int32))))
-		case "int64":
-			data.Set(k, strconv.FormatInt(v.(int64), 10))
-		case "string":
-			data.Set(k, v.(string))
-		case "float64":
-			data.Set(k, decimal.NewFromFloat(v.(float64)).String())
-		case "float32":
-			data.Set(k, decimal.NewFromFloat(float64(v.(float32))).String())
-		case "bool":
-			data.Set(k, IfString(v.(bool), "true", "false"))
-		default:
-			return 0, "", errors.New("Parameter format error")
-		}
-	}
+func RequestJson(method, uri string, paramData []byte, header map[string]string, args ...any) (int, []byte, error) {
+	client := pickHTTPClient(args...)
 
-	client := &http.Client{}
-	if len(args) > 0 && reflect.TypeOf(args[0]).String() == "bool" && args[0].(bool) {
-		client.Transport = &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-			IdleConnTimeout: 30 * time.Second,
-		}
-	}
-
-	request, err := http.NewRequest(string(method), uri, strings.NewReader(data.Encode()))
-	if request == nil {
-		return 0, "", err
-	}
-	for k, v := range header {
-		request.Header.Add(k, v)
-	}
-	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	resp, err := client.Do(request)
+	req, err := http.NewRequest(method, uri, bytes.NewReader(paramData))
 	if err != nil {
-		return 0, "", err
+		return 0, nil, err
+	}
+
+	req.Header.Set("User-Agent", defaultUserAgent)
+	req.Header.Set("Content-Type", "application/json; charset=utf-8")
+	for k, v := range header {
+		req.Header.Set(k, v)
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return 0, nil, err
 	}
 	defer resp.Body.Close()
+
 	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return resp.StatusCode, "", err
-	}
-	return resp.StatusCode, string(body), nil
+
+	return resp.StatusCode, body, err
 }
 
-func PostRequest5(method RequestMethod, uri string, param map[string]string, file *os.File, header map[string]string, args ...interface{}) (int, string, error) {
-	data := url.Values{}
-	for k, v := range param {
-		data.Set(k, v)
-	}
+func RequestFile(method, uri string, param map[string]string, fileFieldName string, file *os.File, header map[string]string, args ...any) (int, []byte, error) {
+	client := pickHTTPClient(args...)
 
-	client := &http.Client{}
-	if len(args) > 0 && reflect.TypeOf(args[0]).String() == "bool" && args[0].(bool) {
-		client.Transport = &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-			IdleConnTimeout: 30 * time.Second,
-		}
-	}
-
-	buf := new(bytes.Buffer)
+	buf := &bytes.Buffer{}
 	bw := multipart.NewWriter(buf)
 
 	for k, v := range param {
-		if len(v) == 0 {
-			continue
-		}
-		pw, _ := bw.CreateFormField(k)
-		pw.Write([]byte(v))
-	}
-
-	//file
-	if file != nil {
-		var fileName string
-		for k, v := range param {
-			if len(v) != 0 {
-				continue
-			}
-			fileName = k
-			break
-		}
-		if len(fileName) != 0 {
-			fw, _ := bw.CreateFormFile(fileName, file.Name())
-			io.Copy(fw, file)
+		if err := bw.WriteField(k, v); err != nil {
+			return 0, nil, err
 		}
 	}
 
-	request, err := http.NewRequest(string(method), uri, buf)
-	if request == nil {
-		return 0, "", err
+	if file != nil && fileFieldName != "" {
+		fw, err := bw.CreateFormFile(fileFieldName, filepath.Base(file.Name()))
+		if err != nil {
+			return 0, nil, err
+		}
+		if _, err = io.Copy(fw, file); err != nil {
+			return 0, nil, err
+		}
 	}
+
+	if err := bw.Close(); err != nil {
+		return 0, nil, err
+	}
+
+	req, err := http.NewRequest(method, uri, buf)
+	if err != nil {
+		return 0, nil, err
+	}
+
+	req.Header.Set("User-Agent", defaultUserAgent)
+	req.Header.Set("Content-Type", bw.FormDataContentType())
 	for k, v := range header {
-		request.Header.Add(k, v)
-	}
-	request.Header.Set("Content-Type", "multipart/form-data")
-	resp, err := client.Do(request)
-	if err != nil {
-		return 0, "", err
-	}
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return resp.StatusCode, "", err
-	}
-	return resp.StatusCode, string(body), nil
-}
-
-func PostRequest6(method RequestMethod, uri string, paramData []byte, header map[string]string, args ...interface{}) (int, string, error) {
-	client := &http.Client{}
-	if len(args) > 0 && reflect.TypeOf(args[0]).String() == "bool" && args[0].(bool) {
-		client.Transport = &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-			IdleConnTimeout: 30 * time.Second,
-		}
+		req.Header.Set(k, v)
 	}
 
-	request, err := http.NewRequest(string(method), uri, strings.NewReader(string(paramData)))
-	if request == nil {
-		return 0, "", err
-	}
-	for k, v := range header {
-		request.Header.Add(k, v)
-	}
-	request.Header.Set("Content-Type", "application/json")
-	resp, err := client.Do(request)
-	if err != nil {
-		return 0, "", err
-	}
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return resp.StatusCode, "", err
-	}
-	return resp.StatusCode, string(body), nil
-}
-
-func GetRequest(method RequestMethod, uri string, param map[string]string, header map[string]string, args ...interface{}) (int, string, error) {
-	data := url.Values{}
-	for k, v := range param {
-		data.Set(k, v)
-	}
-	if len(param) > 0 {
-		uri += "?"
-		uri += data.Encode()
-	}
-
-	client := &http.Client{}
-	if len(args) > 0 && reflect.TypeOf(args[0]).String() == "bool" && args[0].(bool) {
-		client.Transport = &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-			IdleConnTimeout: 30 * time.Second,
-		}
-	}
-
-	req, _ := http.NewRequest(string(method), uri, nil)
-	for k, v := range header {
-		req.Header.Add(k, v)
-	}
 	resp, err := client.Do(req)
 	if err != nil {
-		return 0, "", err
+		return 0, nil, err
 	}
 	defer resp.Body.Close()
+
 	body, err := io.ReadAll(resp.Body)
 
-	return resp.StatusCode, string(body), err
+	return resp.StatusCode, body, err
+}
+
+func RequestGet(method, rawURL string, param, header map[string]string, args ...any) (int, []byte, error) {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return 0, nil, err
+	}
+
+	if len(param) > 0 {
+		q := u.Query()
+		for k, v := range param {
+			q.Set(k, v)
+		}
+		u.RawQuery = q.Encode()
+	}
+
+	client := pickHTTPClient(args...)
+
+	req, err := http.NewRequest(method, u.String(), nil)
+	if err != nil {
+		return 0, nil, err
+	}
+
+	req.Header.Set("User-Agent", defaultUserAgent)
+	for k, v := range header {
+		req.Header.Set(k, v)
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return 0, nil, err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+
+	return resp.StatusCode, body, err
 }

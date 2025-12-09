@@ -3,6 +3,7 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"reflect"
 	"runtime"
 )
@@ -25,7 +26,7 @@ func TranslateLanguage(sourceLanguage, targetLanguage, text string, args ...inte
 	param["source_language"] = sourceLanguage
 	param["target_language"] = targetLanguage
 	param["version"] = version
-	_, response, err := GetRequest(RequestMethodGet, uri, param, nil)
+	_, response, err := RequestGet(http.MethodGet, uri, param, nil)
 	if err != nil {
 		fmt.Println("-----------TranslateLanguage", err)
 		return text
@@ -39,7 +40,7 @@ func TranslateLanguage(sourceLanguage, targetLanguage, text string, args ...inte
 	}
 
 	var res Response
-	json.Unmarshal([]byte(response), &res)
+	json.Unmarshal(response, &res)
 	if res.Code != 200 {
 		fmt.Println("-----------TranslateLanguage", response)
 		return text

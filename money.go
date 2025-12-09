@@ -1,9 +1,9 @@
 package utils
 
 import (
-	"github.com/shopspring/decimal"
-	"math/big"
 	"reflect"
+
+	"github.com/shopspring/decimal"
 )
 
 func Fen2Yuan(price int64, args ...interface{}) string {
@@ -29,11 +29,4 @@ func Yuan2Fen(price float64, args ...interface{}) int64 {
 	df := decimal.NewFromFloat(price).Mul(d)
 
 	return df.IntPart()
-}
-
-func HexToBigInt(hex string) *big.Int {
-	n := new(big.Int)
-	n, _ = n.SetString(hex, 16)
-
-	return n
 }

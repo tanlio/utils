@@ -3,6 +3,7 @@ package utils
 import (
 	"encoding/json"
 	"net"
+	"net/http"
 	"os"
 )
 
@@ -134,13 +135,13 @@ func GetIPAddress(ip string) GetIPAddressResponse {
 	param := make(map[string]string)
 	param["ip"] = ip
 
-	_, response, err := GetRequest(RequestMethodGet, uri, param, nil)
+	_, response, err := RequestGet(http.MethodGet, uri, param, nil)
 	if err != nil {
 		return GetIPAddressResponse{}
 	}
 
 	var ipAddressResponse GetIPAddressResponse
-	json.Unmarshal([]byte(response), &ipAddressResponse)
+	json.Unmarshal(response, &ipAddressResponse)
 	if ipAddressResponse.Code == 200 {
 		json.Unmarshal([]byte(ipAddressResponse.Data.GeoData), &ipAddressResponse.Data.IPAddressResponse)
 	}
@@ -317,13 +318,13 @@ func GetIPCity(ip string) GetIPCityResponse {
 	param := make(map[string]string)
 	param["ip"] = ip
 
-	_, response, err := GetRequest(RequestMethodGet, uri, param, nil)
+	_, response, err := RequestGet(http.MethodGet, uri, param, nil)
 	if err != nil {
 		return GetIPCityResponse{}
 	}
 
 	var ipAddressResponse GetIPCityResponse
-	json.Unmarshal([]byte(response), &ipAddressResponse)
+	json.Unmarshal(response, &ipAddressResponse)
 	if ipAddressResponse.Code == 200 {
 		json.Unmarshal([]byte(ipAddressResponse.Data.GeoData), &ipAddressResponse.Data.IPCityResponse)
 	}
