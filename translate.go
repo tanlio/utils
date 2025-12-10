@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"reflect"
 	"runtime"
 )
 
@@ -16,8 +15,10 @@ func TranslateLanguage(sourceLanguage, targetLanguage, text string, args ...inte
 		return text
 	}
 	var version string
-	if len(args) > 0 && reflect.TypeOf(args[0]).String() == "string" {
-		version = args[0].(string)
+	if len(args) > 0 {
+		if v, ok := args[0].(string); ok {
+			version = v
+		}
 	}
 
 	uri := "http://translate:8080/api/exec-translate"
