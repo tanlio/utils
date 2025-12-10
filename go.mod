@@ -1,4 +1,4 @@
-module github.com/tanlio/utils
+module github.com/tanlio/utils/v2
 
 go 1.24
 
