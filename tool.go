@@ -2,11 +2,12 @@ package utils
 
 import (
 	"errors"
-	"github.com/shopspring/decimal"
 	"math"
 	"math/rand/v2"
 	"reflect"
 	"time"
+
+	"github.com/shopspring/decimal"
 )
 
 //三目运算
@@ -200,28 +201,31 @@ func GenerateRedPacket(totalAmount int64, num int64, maxAmount int64, minAmount 
 		return nil, errors.New("invalid configuration: totalAmount not in [num*min, num*max]")
 	}
 
-	result := make([]int64, num)
+	result := make([]int64, int(num))
 	for i := range result {
 		result[i] = minAmount
 	}
 
+	var index int
 	remainAmount := totalAmount - num*minAmount
 	for remainAmount > 0 {
-		idx := rand.IntN(int(num))
+		idx := index % len(result)
+		index++
 		if result[idx] >= maxAmount {
 			continue
 		}
 
+		var give int64
 		maxGive := maxAmount - result[idx]
-		if maxGive > remainAmount {
-			maxGive = remainAmount
-		}
-
 		if maxGive <= 0 {
 			continue
 		}
+		if maxGive > remainAmount {
+			give = remainAmount
+		} else {
+			give = rand.Int64N(maxGive) + 1
+		}
 
-		give := rand.Int64N(maxGive) + 1
 		result[idx] += give
 		remainAmount -= give
 	}
