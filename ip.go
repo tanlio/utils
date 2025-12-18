@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"context"
 	"encoding/json"
 	"net"
 	"net/http"
@@ -132,10 +133,10 @@ type GetIPAddressResponse struct {
 func GetIPAddress(ip string) GetIPAddressResponse {
 	uri := "http://" + "geoip:8080" + "/api/geo/geo-country"
 
-	param := make(map[string]string)
+	param := make(map[string]any)
 	param["ip"] = ip
 
-	_, response, err := RequestGet(http.MethodGet, uri, param, nil)
+	_, response, err := DefaultClient().RequestGet(context.Background(), http.MethodGet, uri, param, nil)
 	if err != nil {
 		return GetIPAddressResponse{}
 	}
@@ -315,10 +316,10 @@ type GetIPCityResponse struct {
 func GetIPCity(ip string) GetIPCityResponse {
 	uri := "http://" + "geoip:8080" + "/api/geo/geo-city"
 
-	param := make(map[string]string)
+	param := make(map[string]any)
 	param["ip"] = ip
 
-	_, response, err := RequestGet(http.MethodGet, uri, param, nil)
+	_, response, err := DefaultClient().RequestGet(context.Background(), http.MethodGet, uri, param, nil)
 	if err != nil {
 		return GetIPCityResponse{}
 	}

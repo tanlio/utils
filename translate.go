@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -22,12 +23,12 @@ func TranslateLanguage(sourceLanguage, targetLanguage, text string, args ...inte
 	}
 
 	uri := "http://translate:8080/api/exec-translate"
-	param := make(map[string]string)
+	param := make(map[string]any)
 	param["content"] = text
 	param["source_language"] = sourceLanguage
 	param["target_language"] = targetLanguage
 	param["version"] = version
-	_, response, err := RequestGet(http.MethodGet, uri, param, nil)
+	_, response, err := DefaultClient().RequestGet(context.Background(), http.MethodGet, uri, param, nil)
 	if err != nil {
 		fmt.Println("-----------TranslateLanguage", err)
 		return text
