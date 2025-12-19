@@ -135,8 +135,9 @@ func (h *HTTPClient) Do(ctx context.Context, req *http.Request, header map[strin
 	return resp.StatusCode, body, readErr
 }
 
-func (h *HTTPClient) RequestJSON(ctx context.Context, method, uri string, paramJSON []byte, header map[string]string, opts ...Option) (int, []byte, error) {
-	req, err := http.NewRequest(method, uri, bytes.NewReader(paramJSON))
+func (h *HTTPClient) RequestJSON(ctx context.Context, method, uri string, param map[string]any, header map[string]string, opts ...Option) (int, []byte, error) {
+	data, _ := json.Marshal(param)
+	req, err := http.NewRequest(method, uri, bytes.NewReader(data))
 	if err != nil {
 		return 0, nil, err
 	}
@@ -144,14 +145,9 @@ func (h *HTTPClient) RequestJSON(ctx context.Context, method, uri string, paramJ
 	return h.Do(ctx, req, header, opts...)
 }
 
-func (h *HTTPClient) RequestForm(ctx context.Context, method, uri string, paramJSON []byte, header map[string]string, opts ...Option) (int, []byte, error) {
-	var m map[string]any
-	if err := json.Unmarshal(paramJSON, &m); err != nil {
-		return 0, nil, err
-	}
-
+func (h *HTTPClient) RequestForm(ctx context.Context, method, uri string, param map[string]any, header map[string]string, opts ...Option) (int, []byte, error) {
 	values := url.Values{}
-	for k, v := range m {
+	for k, v := range param {
 		values.Set(k, fmt.Sprint(v))
 	}
 
