@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -106,6 +107,25 @@ func (h *HTTPClient) applyHeaders(req *http.Request, header map[string]string, u
 	}
 }
 
+func normalizeParam(param any) (map[string]any, error) {
+	if param == nil {
+		return nil, nil
+	}
+
+	switch p := param.(type) {
+	case map[string]any:
+		return p, nil
+	case map[string]string:
+		m := make(map[string]any, len(p))
+		for k, v := range p {
+			m[k] = v
+		}
+		return m, nil
+	default:
+		return nil, errors.New("param must be map[string]any or map[string]string")
+	}
+}
+
 func (h *HTTPClient) Do(ctx context.Context, req *http.Request, header map[string]string, opts ...Option) (int, []byte, error) {
 	opt := RequestOption{UserAgent: h.ua, Timeout: 30 * time.Second}
 	for _, fn := range opts {
@@ -135,8 +155,13 @@ func (h *HTTPClient) Do(ctx context.Context, req *http.Request, header map[strin
 	return resp.StatusCode, body, readErr
 }
 
-func (h *HTTPClient) RequestJSON(ctx context.Context, method, uri string, param map[string]any, header map[string]string, opts ...Option) (int, []byte, error) {
-	data, _ := json.Marshal(param)
+func (h *HTTPClient) RequestJSON(ctx context.Context, method, uri string, param any, header map[string]string, opts ...Option) (int, []byte, error) {
+	pa, err := normalizeParam(param)
+	if err != nil {
+		return 0, nil, err
+	}
+	data, _ := json.Marshal(pa)
+
 	req, err := http.NewRequest(method, uri, bytes.NewReader(data))
 	if err != nil {
 		return 0, nil, err
@@ -145,9 +170,14 @@ func (h *HTTPClient) RequestJSON(ctx context.Context, method, uri string, param 
 	return h.Do(ctx, req, header, opts...)
 }
 
-func (h *HTTPClient) RequestForm(ctx context.Context, method, uri string, param map[string]any, header map[string]string, opts ...Option) (int, []byte, error) {
+func (h *HTTPClient) RequestForm(ctx context.Context, method, uri string, param any, header map[string]string, opts ...Option) (int, []byte, error) {
+	pa, err := normalizeParam(param)
+	if err != nil {
+		return 0, nil, err
+	}
+
 	values := url.Values{}
-	for k, v := range param {
+	for k, v := range pa {
 		values.Set(k, fmt.Sprint(v))
 	}
 
@@ -159,18 +189,22 @@ func (h *HTTPClient) RequestForm(ctx context.Context, method, uri string, param 
 	return h.Do(ctx, req, header, opts...)
 }
 
-func (h *HTTPClient) RequestGet(ctx context.Context, method, rawURL string, param map[string]any, header map[string]string, opts ...Option) (int, []byte, error) {
+func (h *HTTPClient) RequestGet(ctx context.Context, method, rawURL string, param any, header map[string]string, opts ...Option) (int, []byte, error) {
 	u, err := url.Parse(rawURL)
 	if err != nil {
 		return 0, nil, err
 	}
-	if len(param) > 0 {
-		q := u.Query()
-		for k, v := range param {
-			q.Set(k, fmt.Sprint(v))
-		}
-		u.RawQuery = q.Encode()
+
+	pa, err := normalizeParam(param)
+	if err != nil {
+		return 0, nil, err
 	}
+
+	q := u.Query()
+	for k, v := range pa {
+		q.Set(k, fmt.Sprint(v))
+	}
+	u.RawQuery = q.Encode()
 
 	req, err := http.NewRequest(method, u.String(), nil)
 	if err != nil {
@@ -179,11 +213,15 @@ func (h *HTTPClient) RequestGet(ctx context.Context, method, rawURL string, para
 	return h.Do(ctx, req, header, opts...)
 }
 
-func (h *HTTPClient) RequestFile(ctx context.Context, method, uri string, param map[string]any, fileFieldName string, file *os.File, header map[string]string, opts ...Option) (int, []byte, error) {
+func (h *HTTPClient) RequestFile(ctx context.Context, method, uri string, param any, fileFieldName string, file *os.File, header map[string]string, opts ...Option) (int, []byte, error) {
 	buf := &bytes.Buffer{}
 	bw := multipart.NewWriter(buf)
 
-	for k, v := range param {
+	pa, err := normalizeParam(param)
+	if err != nil {
+		return 0, nil, err
+	}
+	for k, v := range pa {
 		if err := bw.WriteField(k, fmt.Sprint(v)); err != nil {
 			return 0, nil, err
 		}
