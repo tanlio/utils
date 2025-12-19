@@ -17,6 +17,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/shopspring/decimal"
 )
 
 const defaultUserAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1"
@@ -107,22 +109,24 @@ func (h *HTTPClient) applyHeaders(req *http.Request, header map[string]string, u
 	}
 }
 
-func normalizeParam(param any) (map[string]any, error) {
+func normalizeParam(param any) (map[string]any, []byte, error) {
 	if param == nil {
-		return nil, nil
+		return nil, nil, nil
 	}
 
 	switch p := param.(type) {
 	case map[string]any:
-		return p, nil
+		return p, nil, nil
 	case map[string]string:
 		m := make(map[string]any, len(p))
 		for k, v := range p {
 			m[k] = v
 		}
-		return m, nil
+		return m, nil, nil
+	case []byte:
+		return nil, param.([]byte), nil
 	default:
-		return nil, errors.New("param must be map[string]any or map[string]string")
+		return nil, nil, errors.New("param must be map[string]any or map[string]string")
 	}
 }
 
@@ -156,13 +160,19 @@ func (h *HTTPClient) Do(ctx context.Context, req *http.Request, header map[strin
 }
 
 func (h *HTTPClient) RequestJSON(ctx context.Context, method, uri string, param any, header map[string]string, opts ...Option) (int, []byte, error) {
-	pa, err := normalizeParam(param)
+	pMap, pBody, err := normalizeParam(param)
 	if err != nil {
 		return 0, nil, err
 	}
-	data, _ := json.Marshal(pa)
+	var body io.Reader
+	if pMap != nil {
+		data, _ := json.Marshal(pMap)
+		body = bytes.NewReader(data)
+	} else if pBody != nil {
+		body = bytes.NewReader(pBody)
+	}
 
-	req, err := http.NewRequest(method, uri, bytes.NewReader(data))
+	req, err := http.NewRequest(method, uri, body)
 	if err != nil {
 		return 0, nil, err
 	}
@@ -171,14 +181,31 @@ func (h *HTTPClient) RequestJSON(ctx context.Context, method, uri string, param 
 }
 
 func (h *HTTPClient) RequestForm(ctx context.Context, method, uri string, param any, header map[string]string, opts ...Option) (int, []byte, error) {
-	pa, err := normalizeParam(param)
+	pMap, pBody, err := normalizeParam(param)
 	if err != nil {
 		return 0, nil, err
 	}
 
 	values := url.Values{}
-	for k, v := range pa {
-		values.Set(k, fmt.Sprint(v))
+	if pMap != nil {
+		for k, v := range pMap {
+			values.Set(k, fmt.Sprint(v))
+		}
+	} else if pBody != nil {
+		paramBody := make(map[string]any)
+		json.Unmarshal(pBody, &paramBody)
+		for k, v := range paramBody {
+			var tempStr string
+			switch v.(type) {
+			case float32:
+				tempStr = decimal.NewFromFloat32(v.(float32)).String()
+			case float64:
+				tempStr = decimal.NewFromFloat(v.(float64)).String()
+			default:
+				tempStr = fmt.Sprint(v)
+			}
+			values.Set(k, tempStr)
+		}
 	}
 
 	req, err := http.NewRequest(method, uri, strings.NewReader(values.Encode()))
@@ -195,13 +222,13 @@ func (h *HTTPClient) RequestGet(ctx context.Context, method, rawURL string, para
 		return 0, nil, err
 	}
 
-	pa, err := normalizeParam(param)
+	pMap, _, err := normalizeParam(param)
 	if err != nil {
 		return 0, nil, err
 	}
 
 	q := u.Query()
-	for k, v := range pa {
+	for k, v := range pMap {
 		q.Set(k, fmt.Sprint(v))
 	}
 	u.RawQuery = q.Encode()
@@ -217,12 +244,28 @@ func (h *HTTPClient) RequestFile(ctx context.Context, method, uri string, param 
 	buf := &bytes.Buffer{}
 	bw := multipart.NewWriter(buf)
 
-	pa, err := normalizeParam(param)
+	pMap, pBody, err := normalizeParam(param)
 	if err != nil {
 		return 0, nil, err
 	}
-	for k, v := range pa {
+	for k, v := range pMap {
 		if err := bw.WriteField(k, fmt.Sprint(v)); err != nil {
+			return 0, nil, err
+		}
+	}
+	paramBody := make(map[string]any)
+	json.Unmarshal(pBody, &paramBody)
+	for k, v := range paramBody {
+		var tempStr string
+		switch v.(type) {
+		case float32:
+			tempStr = decimal.NewFromFloat32(v.(float32)).String()
+		case float64:
+			tempStr = decimal.NewFromFloat(v.(float64)).String()
+		default:
+			tempStr = fmt.Sprint(v)
+		}
+		if err := bw.WriteField(k, tempStr); err != nil {
 			return 0, nil, err
 		}
 	}
